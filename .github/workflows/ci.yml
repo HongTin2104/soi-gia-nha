@@ -5,19 +5,56 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: ruff format --check .
-      - run: pytest -q
+      # The model and app data (~140 MB) come from GitHub releases. With them the Streamlit
+      # app tests run instead of being skipped. The versions live in assets.py.
+      - uses: actions/cache@v6
+        with:
+          path: |
+            models/
+            data/app/
+          key: app-assets-${{ hashFiles('src/soi_gia_nha/assets.py') }}
+      - name: Fetch model and app data
+        run: python -c "from soi_gia_nha.assets import ensure_data, ensure_model; ensure_model(); ensure_data()"
+      # Fails below the fail_under threshold in pyproject.toml.
+      - run: pytest -q --cov --cov-report=term-missing:skip-covered
+      - name: Coverage summary
+        if: matrix.python-version == '3.12'
+        run: coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
   docker:
     runs-on: ubuntu-latest
