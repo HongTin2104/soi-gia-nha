@@ -1,6 +1,10 @@
 # soi-gia-nha
 
 [![CI](https://github.com/HongTin2104/soi-gia-nha/actions/workflows/ci.yml/badge.svg)](https://github.com/HongTin2104/soi-gia-nha/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/HongTin2104/soi-gia-nha)](https://github.com/HongTin2104/soi-gia-nha/releases)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
+[![Code: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE)
+[![Data and model: CC BY-NC 4.0](https://img.shields.io/badge/data%20%26%20model-CC%20BY--NC%204.0-lightgrey)](#license)
 
 **Is this listing overpriced, and how long has it been on the market?** Paste a house or
 apartment listing from Hanoi or Ho Chi Minh City. You get a fair price range with the reasons
