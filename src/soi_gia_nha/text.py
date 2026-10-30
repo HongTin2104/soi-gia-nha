@@ -10,15 +10,18 @@ from __future__ import annotations
 
 import pandas as pd
 
-_NUM = r"(\d{1,2}(?:[.,]\d)?)"
+_WIDTH = r"(\d{1,2}m\d\b|\d{1,2}(?:[.,]\d)?\s*m\b)"
 
 # Southern listings count floors as ground floor (trệt) + upper floors (lầu):
 # "trệt 2 lầu" is 3 floors, the same house the North calls "3 tầng".
 FLOORS_TANG = r"(\d{1,2})\s*(?:tầng|tấm)\b"
 FLOORS_LAU = r"(\d{1,2})\s*lầu\b"
 BEDROOMS = r"(\d{1,2})\s*(?:phòng ngủ|pn\b|ngủ\b)"
-FRONTAGE = r"(?:mặt tiền|ngang)\s*(?:rộng\s*)?" + _NUM + r"\s*m\b"
-ROAD = r"(?:đường|lộ|ngõ|ngách|hẻm|kiệt)\s*(?:trước nhà\s*)?(?:rộng\s*)?" + _NUM + r"\s*m\b"
+FRONTAGE = r"(?:mặt tiền|ngang)\s*(?:rộng\s*)?" + _WIDTH
+ROAD = (
+    r"(?:đường|lộ|ngõ|ngách|hẻm|kiệt)\s*(?:trước nhà\s*)?"
+    r"(?:(?:xe hơi|ô tô|oto|xe tải)\s*)?(?:rộng\s*)?" + _WIDTH
+)
 
 FLAGS = {
     "legal_book": r"sổ (?:hồng|đỏ|riêng)|\bshr\b|\bsđcc\b",
@@ -42,7 +45,10 @@ FEATURES = NUMERIC + list(FLAGS)
 
 def _first_number(text: pd.Series, pattern: str) -> pd.Series:
     found = text.str.extract(pattern, expand=False)
-    return pd.to_numeric(found.str.replace(",", ".", regex=False), errors="coerce")
+    # Widths may put the metre unit between digits (3m5), or after them (3.5 m).
+    found = found.str.replace(r"\s*m$", "", regex=True)
+    found = found.str.replace("m", ".", regex=False).str.replace(",", ".", regex=False)
+    return pd.to_numeric(found, errors="coerce")
 
 
 def prepare_text(name: pd.Series, description: pd.Series) -> pd.Series:
