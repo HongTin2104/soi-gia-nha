@@ -38,10 +38,12 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.coverage.run]
-source = ["soi_gia_nha"]
+source = ["soi_gia_nha", "app", "scripts"]
 branch = true
 
 [tool.coverage.report]
-# CI has no model or app data, so the tests that need them are skipped there (about 90%).
-fail_under = 85
+# CI downloads the model and app data first. Without them the app tests are skipped and
+# coverage drops to about 90%, so run `pytest` without --cov or fetch them (see CONTRIBUTING.md).
+fail_under = 95
 show_missing = true
+exclude_also = ['if __name__ == "__main__":']
