@@ -78,7 +78,9 @@ def raw_snapshot(n: int = 1500, reposted: int = 40, seed: int = 0) -> pd.DataFra
         for step in range(1, 3):
             later = dict(first)
             later["price"] = str(int(int(first["price"]) * (1 - 0.05 * step)))
-            later["published_at"] = str(pd.Timestamp(first["published_at"]) + pd.Timedelta(days=20 * step))
+            later["published_at"] = str(
+                pd.Timestamp(first["published_at"]) + pd.Timedelta(days=20 * step)
+            )
             rows.append(later)
     return pd.DataFrame(rows, columns=COLUMNS)
 
@@ -104,7 +106,11 @@ def admin_map() -> pd.DataFrame:
 @pytest.fixture
 def project(tmp_path, monkeypatch):
     """A temporary project root with two raw shards; every script is pointed at it."""
-    raw, processed, reports = tmp_path / "data" / "raw", tmp_path / "data" / "processed", tmp_path / "reports"
+    raw, processed, reports = (
+        tmp_path / "data" / "raw",
+        tmp_path / "data" / "processed",
+        tmp_path / "reports",
+    )
     for d in (raw, processed, reports):
         d.mkdir(parents=True)
     snapshot = raw_snapshot()
@@ -165,7 +171,9 @@ def test_pipeline_end_to_end(project, capsys):
 
     build_app_data.main()
     app_dir = project / "data" / "app"
-    with zipfile.ZipFile(project / "data" / f"soi-gia-nha-data-{build_app_data.DATA_VERSION}.zip") as z:
+    with zipfile.ZipFile(
+        project / "data" / f"soi-gia-nha-data-{build_app_data.DATA_VERSION}.zip"
+    ) as z:
         assert sorted(z.namelist()) == sorted(build_app_data.DATA_FILES)
     assert all((app_dir / f).exists() for f in build_app_data.DATA_FILES)
 
