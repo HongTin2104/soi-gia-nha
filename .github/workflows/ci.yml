@@ -5,19 +5,43 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - run: pip install "ruff>=0.6"
+      - run: ruff check --output-format=github .
+      - run: ruff format --check --diff .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: ruff format --check .
-      - run: pytest -q
+      # Fails below the fail_under threshold in pyproject.toml.
+      - run: pytest -q --cov --cov-report=term-missing:skip-covered
+      - name: Coverage summary
+        if: matrix.python-version == '3.12'
+        run: coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
   docker:
     runs-on: ubuntu-latest
