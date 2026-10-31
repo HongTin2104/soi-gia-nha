@@ -15,6 +15,14 @@ _PRICE_TR = re.compile(_DEC + r"\s*(?:triệu|tr)\b(?!\s*/)")
 _AREA = re.compile(_DEC + r"\s*(?:m2|m²|mét vuông)")
 # A bare "m" is a width ("mặt tiền 5m") unless the text says it is the area.
 _AREA_LABELLED = re.compile(r"(?:dt|diện tích)\s*:?\s*" + _DEC + r"\s*m\b")
+# Width x length, e.g. "4x15m", "4,5x20m", "DT 4.5 x 20 m"
+_DIM = re.compile(
+    r"(?:dt|diện tích)?\s*:?\s*"
+    + _DEC
+    + r"\s*[x×*]\s*"
+    + _DEC
+    + r"(?:\s*m)?"
+)
 
 
 def _num(s: str) -> float:
@@ -43,10 +51,26 @@ def parse_price(text: str) -> float | None:
 def parse_area(text: str) -> float | None:
     t = text.lower()
     m = _AREA.search(t) or _AREA_LABELLED.search(t)
+    if m:
+        area = _num(m.group(1))
+        return area if 5 <= area <= 100_000 else None
+    # Fall back to width × length when no explicit area is present.
+    m = _DIM.search(t)
+    if m:
+        width = _num(m.group(1))
+        length = _num(m.group(2))
+        area = width * length
+        return area if 5 <= area <= 100_000 else None
+    return None
+
+
+def _parse_dimensions(text: str) -> tuple[float, float] | None:
+    """Return (width, length) if a dimension pattern is found, else None."""
+    t = text.lower()
+    m = _DIM.search(t)
     if not m:
         return None
-    area = _num(m.group(1))
-    return area if 5 <= area <= 100_000 else None
+    return _num(m.group(1)), _num(m.group(2))
 
 
 def build(
@@ -64,6 +88,13 @@ def build(
 ) -> pd.DataFrame:
     """One-row frame for ``PriceModel``. Values passed explicitly win over the text."""
     feats = extract(prepare_text(pd.Series([""]), pd.Series([text]))).iloc[0]
+    dims = _parse_dimensions(text)
+    frontage = details.get("frontage_width")
+    if pd.isna(frontage):
+        frontage = feats["txt_frontage"]
+    if pd.isna(frontage) and dims is not None:
+        # Width from "A x B" is typically the frontage.
+        frontage = dims[0]
     row = {
         "name": "",
         "description": text,
@@ -78,7 +109,7 @@ def build(
         "floor_count": details.get("floor_count") or feats["txt_floors"],
         "bedroom_count": details.get("bedroom_count") or feats["txt_bedrooms"],
         "bathroom_count": details.get("bathroom_count"),
-        "frontage_width": details.get("frontage_width") or feats["txt_frontage"],
+        "frontage_width": frontage,
         "house_depth": details.get("house_depth"),
         "road_width": details.get("road_width") or feats["txt_road"],
         "house_direction": details.get("house_direction"),

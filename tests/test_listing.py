@@ -35,6 +35,13 @@ def test_parse_price(text, price):
         ("mặt tiền 5m, dài 12m, 60m2", 60),
         ("DT 45m, nở hậu", 45),
         ("Không ghi diện tích", None),
+        # Width × length forms
+        ("4x15m", 60),
+        ("DT 4,5x20m", 90),
+        ("4.5 x 12 m", 54),
+        ("ngang 5×18", 90),
+        ("60m2, 4x15m", 60),  # explicit area wins
+        ("4x15m, DT: 70m2", 70),
     ],
 )
 def test_parse_area(text, area):
@@ -50,3 +57,11 @@ def test_build_reads_text_and_respects_overrides():
     assert row["floor_count"] == 5  # explicit value wins over "4 tầng"
     assert row["car_access"] and row["legal_book"]
     assert isinstance(row["published_at"], pd.Timestamp)
+
+
+def test_build_fills_frontage_from_dimensions():
+    text = "Nhà 4x15m, giá 8 tỷ"
+    df = build(text, province="Hà Nội", district="Ba Đình", property_type="Nhà")
+    row = df.iloc[0]
+    assert row["area"] == pytest.approx(60)
+    assert row["frontage_width"] == pytest.approx(4)
