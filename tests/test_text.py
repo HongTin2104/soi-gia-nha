@@ -73,3 +73,27 @@ def test_fill_missing_prefers_structured_values():
     assert out["bedroom_count"].isna().iloc[0]
     assert out["bedroom_count"].iloc[1] == 3
     assert "urgent" in out
+
+
+@pytest.mark.parametrize(
+    ("text", "column", "expected"),
+    [
+        ("hẻm 3m5", "txt_road", 3.5),
+        ("mặt tiền 4m5", "txt_frontage", 4.5),
+        ("ngang rộng 4m5", "txt_frontage", 4.5),
+        ("nhà 4 tầng hẻm xe hơi 6m", "txt_road", 6),
+        ("ngõ ô tô rộng 3m5", "txt_road", 3.5),
+        ("ngõ 2,5m", "txt_road", 2.5),
+        ("mặt tiền 4.5 m", "txt_frontage", 4.5),
+        ("hẻm trước nhà rộng 6 m", "txt_road", 6),
+        ("hẻm 3m50", "txt_road", None),
+        ("mặt tiền 0m5", "txt_frontage", None),
+        ("mặt tiền 51m5", "txt_frontage", None),
+    ],
+)
+def test_compact_widths_and_car_alleys(text, column, expected):
+    value = one(text)[column]
+    if expected is None:
+        assert pd.isna(value)
+    else:
+        assert value == expected
