@@ -1,0 +1,18 @@
+name: Feature request
+description: A new city, feature or improvement to the model
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Who would use it, and what the app cannot do for them today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help
+      description: The feature you have in mind. For a new city or data source, link the data and its licence.
+    validations:
+      required: true
