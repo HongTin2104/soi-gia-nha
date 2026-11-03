@@ -15,3 +15,7 @@ models/
 *.egg-info/
 data/app/
 data/*.zip
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/

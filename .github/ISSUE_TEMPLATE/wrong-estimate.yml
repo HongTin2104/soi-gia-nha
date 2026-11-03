@@ -1,0 +1,30 @@
+name: Wrong estimate or extraction
+description: A listing where the price range, the reasons, or the details read from the text look wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: listing
+    attributes:
+      label: Listing text
+      description: Paste the listing as you entered it. Remove the seller's name and phone number.
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What the app showed
+      description: The price range, or the field that was read wrongly (area, floors, width, road...).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and why
+      description: For example the area written in the listing, or comparable sales you know of.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag or commit, if you know it.

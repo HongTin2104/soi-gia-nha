@@ -10,7 +10,7 @@ from .text import extract, prepare_text
 
 _DEC = r"(\d+(?:[.,]\d+)?)"
 # "9,1 tỷ", "9 tỷ 500", "9 tỷ 5", "850 triệu", "850tr"
-_PRICE_TY = re.compile(_DEC + r"\s*(?:tỷ|ty)\b\s*(\d{1,3})?(?!\s*(?:m|/))")
+_PRICE_TY = re.compile(_DEC + r"\s*(?:tỷ|tỉ|ty)(?![^\W\d_])\s*(\d{1,3})?(?!\s*(?:m|/))")
 _PRICE_TR = re.compile(_DEC + r"\s*(?:triệu|tr)\b(?!\s*/)")
 _AREA = re.compile(_DEC + r"\s*(?:m2|m²|mét vuông)")
 # A bare "m" is a width ("mặt tiền 5m") unless the text says it is the area.
