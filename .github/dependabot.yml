@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      python:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    # Majors of the build and test tools tend to break CI; upgrade them by hand.
+    ignore:
+      - dependency-name: pytest
+        update-types: [version-update:semver-major]
+      - dependency-name: pytest-cov
+        update-types: [version-update:semver-major]
+      - dependency-name: setuptools
+        update-types: [version-update:semver-major]
