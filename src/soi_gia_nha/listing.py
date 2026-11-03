@@ -16,13 +16,7 @@ _AREA = re.compile(_DEC + r"\s*(?:m2|m²|mét vuông)")
 # A bare "m" is a width ("mặt tiền 5m") unless the text says it is the area.
 _AREA_LABELLED = re.compile(r"(?:dt|diện tích)\s*:?\s*" + _DEC + r"\s*m\b")
 # Width x length, e.g. "4x15m", "4,5x20m", "DT 4.5 x 20 m"
-_DIM = re.compile(
-    r"(?:dt|diện tích)?\s*:?\s*"
-    + _DEC
-    + r"\s*[x×*]\s*"
-    + _DEC
-    + r"(?:\s*m)?"
-)
+_DIM = re.compile(r"(?:dt|diện tích)?\s*:?\s*" + _DEC + r"\s*[x×*]\s*" + _DEC + r"(?:\s*m)?")
 
 
 def _num(s: str) -> float:
