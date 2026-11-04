@@ -86,6 +86,7 @@ def test_fill_missing_prefers_structured_values():
         ("ngõ 2,5m", "txt_road", 2.5),
         ("mặt tiền 4.5 m", "txt_frontage", 4.5),
         ("hẻm trước nhà rộng 6 m", "txt_road", 6),
+        ("mặt tiền 4m5x15m", "txt_frontage", 4.5),
         ("hẻm 3m50", "txt_road", None),
         ("mặt tiền 0m5", "txt_frontage", None),
         ("mặt tiền 51m5", "txt_frontage", None),
