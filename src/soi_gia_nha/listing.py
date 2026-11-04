@@ -15,6 +15,10 @@ _PRICE_TR = re.compile(_DEC + r"\s*(?:triệu|tr)\b(?!\s*/)")
 _AREA = re.compile(_DEC + r"\s*(?:m2|m²|mét vuông)")
 # A bare "m" is a width ("mặt tiền 5m") unless the text says it is the area.
 _AREA_LABELLED = re.compile(r"(?:dt|diện tích)\s*:?\s*" + _DEC + r"\s*m\b")
+# Width × length: "4x15m", "4,5x20m", "4m5x15m", "DT 4.5 x 20 m"
+# Each side: compact "4m5" (= 4.5 m) or plain decimal.
+_SIDE = r"(\d{1,2}m\d(?!\d)|\d+(?:[.,]\d+)?)"
+_DIM = re.compile(r"(?:dt|diện tích)?\s*:?\s*" + _SIDE + r"\s*[x×*]\s*" + _SIDE + r"(?:\s*m)?")
 
 
 def _num(s: str) -> float:
@@ -22,6 +26,14 @@ def _num(s: str) -> float:
     if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", s):
         return float(s.replace(".", ""))
     return float(s.replace(",", "."))
+
+
+def _dim_to_metres(raw: str) -> float:
+    # "4m5" → 4.5; plain decimal → float.
+    if re.fullmatch(r"\d{1,2}m\d", raw):
+        int_part, dec = raw.split("m")
+        return float(int_part) + float(dec) / 10
+    return _num(raw)
 
 
 def parse_price(text: str) -> float | None:
@@ -40,13 +52,37 @@ def parse_price(text: str) -> float | None:
     return None
 
 
+_W_MIN, _W_MAX = 1, 50
+_L_MIN, _L_MAX = 1, 200
+
+
 def parse_area(text: str) -> float | None:
     t = text.lower()
     m = _AREA.search(t) or _AREA_LABELLED.search(t)
+    if m:
+        area = _num(m.group(1))
+        return area if 5 <= area <= 100_000 else None
+    m = _DIM.search(t)
+    if m:
+        w = _dim_to_metres(m.group(1))
+        length = _dim_to_metres(m.group(2))
+        if _W_MIN <= w <= _W_MAX and _L_MIN <= length <= _L_MAX:
+            area = w * length
+            return area if 5 <= area <= 100_000 else None
+    return None
+
+
+def _parse_dimensions(text: str) -> tuple[float, float] | None:
+    """Return (width, length) if a dimension pattern is found, else None."""
+    t = text.lower()
+    m = _DIM.search(t)
     if not m:
         return None
-    area = _num(m.group(1))
-    return area if 5 <= area <= 100_000 else None
+    w = _dim_to_metres(m.group(1))
+    length = _dim_to_metres(m.group(2))
+    if _W_MIN <= w <= _W_MAX and _L_MIN <= length <= _L_MAX:
+        return w, length
+    return None
 
 
 def build(
@@ -64,6 +100,12 @@ def build(
 ) -> pd.DataFrame:
     """One-row frame for ``PriceModel``. Values passed explicitly win over the text."""
     feats = extract(prepare_text(pd.Series([""]), pd.Series([text]))).iloc[0]
+    dims = _parse_dimensions(text)
+    frontage = details.get("frontage_width")
+    if pd.isna(frontage):
+        frontage = feats["txt_frontage"]
+    if pd.isna(frontage) and dims is not None:
+        frontage = dims[0]
     row = {
         "name": "",
         "description": text,
@@ -78,7 +120,7 @@ def build(
         "floor_count": details.get("floor_count") or feats["txt_floors"],
         "bedroom_count": details.get("bedroom_count") or feats["txt_bedrooms"],
         "bathroom_count": details.get("bathroom_count"),
-        "frontage_width": details.get("frontage_width") or feats["txt_frontage"],
+        "frontage_width": frontage,
         "house_depth": details.get("house_depth"),
         "road_width": details.get("road_width") or feats["txt_road"],
         "house_direction": details.get("house_direction"),
