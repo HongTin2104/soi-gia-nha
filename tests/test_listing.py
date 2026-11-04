@@ -35,6 +35,17 @@ def test_parse_price(text, price):
         ("mặt tiền 5m, dài 12m, 60m2", 60),
         ("DT 45m, nở hậu", 45),
         ("Không ghi diện tích", None),
+        # width × length dimension fallback
+        ("4x15m", 60),
+        ("DT 4,5x20m", 90),
+        ("4.5 x 12 m", 54),
+        ("ngang 5×18", 90),
+        ("60m2, 4x15m", 60),  # explicit area wins over dimension
+        # compact width notation
+        ("4m5x15m", 67.5),
+        ("nhà 3m5 x 15m", 52.5),
+        # phone number must not be parsed as dimensions
+        ("sđt 0912x345x678", None),
     ],
 )
 def test_parse_area(text, area):
