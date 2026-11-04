@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-_WIDTH = r"(\d{1,2}m\d\b|\d{1,2}(?:[.,]\d)?\s*m\b)"
+_WIDTH = r"(\d{1,2}m\d(?!\d)|\d{1,2}(?:[.,]\d)?\s*m\b)"
 
 # Southern listings count floors as ground floor (trệt) + upper floors (lầu):
 # "trệt 2 lầu" is 3 floors, the same house the North calls "3 tầng".
